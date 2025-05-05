@@ -1,7 +1,9 @@
 import mongoose, { Document, Model } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-interface Iuser extends Document {
+
+export interface Iuser extends Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   username: string;
   password?: string;
@@ -11,12 +13,15 @@ interface Iuser extends Document {
   lastSeen: Date;
   isOnline: Boolean;
   email?: string;
+  refreshToken?: string;
   comparePassword(password: string): Promise<boolean>;
   generateRefreshToken(): string;
   generateAccessToken(): string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const userSchema = new mongoose.Schema<Iuser>(
+const userSchema: mongoose.Schema<Iuser> = new mongoose.Schema<Iuser>(
   {
     name: {
       type: String,
@@ -33,6 +38,7 @@ const userSchema = new mongoose.Schema<Iuser>(
       type: String,
       required: false,
       minlength: 6,
+      select: false,
     },
     phoneNumber: {
       type: String,
@@ -60,6 +66,11 @@ const userSchema = new mongoose.Schema<Iuser>(
       unique: true,
       trim: true,
       sparse: true,
+    },
+    refreshToken: {
+      type: String,
+      required: false,
+      select: false,
     },
   },
   { timestamps: true }
