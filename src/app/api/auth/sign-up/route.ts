@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
         name,
         email: email,
       },
-      { session },
+      { session }
     );
     if (!newUser) {
       await session.abortTransaction();
