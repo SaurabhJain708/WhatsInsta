@@ -1,7 +1,7 @@
 import mongoose, { Document, Model } from "mongoose";
 import bcrypt from "bcrypt";
 
-interface Iotp extends Document {
+export interface Iotp extends Document {
   userIdentifier: string; // email or phone wrapped
   otp: string;
   compareOtp(otp: string): Promise<boolean>;
