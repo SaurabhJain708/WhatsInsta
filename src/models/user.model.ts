@@ -7,7 +7,6 @@ export interface Iuser extends Document {
   name: string;
   username: string;
   password?: string;
-  phoneNumber: String;
   about: String; // user status
   profilePicUrl: String;
   lastSeen: Date;
@@ -40,11 +39,6 @@ const userSchema: mongoose.Schema<Iuser> = new mongoose.Schema<Iuser>(
       required: false,
       minlength: 6,
       select: false,
-    },
-    phoneNumber: {
-      type: String,
-      required: true,
-      unique: true,
     },
     about: {
       type: String,

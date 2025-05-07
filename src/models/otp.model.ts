@@ -8,7 +8,7 @@ export interface Iotp extends Document {
   createdAt: Date;
 }
 
-const otpSchema = new mongoose.Schema<Iotp>({
+const otpSchema:mongoose.Schema<Iotp> = new mongoose.Schema<Iotp>({
   email: {
     type: String,
     required: true,

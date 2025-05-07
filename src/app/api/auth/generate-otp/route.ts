@@ -23,12 +23,14 @@ export async function POST(req: NextRequest) {
     session.startTransaction();
     const existingOtp: null | Iotp = await Otp.findOne({
       email,
-    });
+    }).session(session);
     if (existingOtp) {
       const deleteOldOtp = await Otp.findByIdAndDelete(existingOtp._id, {
         session,
       });
       if (!deleteOldOtp) {
+        await session.abortTransaction();
+        session.endSession();
         return NextResponse.json(
           new ApiError(500, "Internal server error, otp not genrated"),
           { status: 500 }
@@ -38,8 +40,10 @@ export async function POST(req: NextRequest) {
     const nanoid = customAlphabet("0123456789", 6);
 
     const otp = nanoid(); // e.g., '483920'
-    const newOtp = await Otp.create([{ email, otp }], { session });
-    if (!newOtp || newOtp.length === 0) {
+    const newOtp = await Otp.create({ email, otp }, { session });
+    if (!newOtp) {
+      await session.abortTransaction();
+      session.endSession();
       return NextResponse.json(
         new ApiError(500, "Internal server error in creating new otp"),
         { status: 500 }
@@ -48,6 +52,8 @@ export async function POST(req: NextRequest) {
 
     const sendEmailtoId = await SendEmail(otp, email);
     if (!sendEmailtoId) {
+      await session.abortTransaction();
+      session.endSession();
       return NextResponse.json(
         new ApiError(500, "Error in sending email, pleaase try again"),
         { status: 500 }
