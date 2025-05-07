@@ -1,7 +1,7 @@
 import { ApiError } from "@/lib/ApiError";
 import { ApiResponse } from "@/lib/ApiResponse";
 import { mongoDb } from "@/lib/mongodb";
-import { isEmail, isPhone } from "@/lib/phone&emailidentifier";
+import { SendEmail } from "@/lib/Resend";
 import { Iotp, Otp } from "@/models/otp.model";
 import mongoose from "mongoose";
 import { customAlphabet } from "nanoid";
@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
   const session = await mongoose.startSession();
 
   try {
-    const { userIdentifier } = await req.json();
-    if (!userIdentifier) {
+    const { email } = await req.json();
+    if (!email) {
       return NextResponse.json(
         new ApiError(400, "Please enter phone number or email"),
         { status: 400 }
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
     session.startTransaction();
     const existingOtp: null | Iotp = await Otp.findOne({
-      userIdentifier,
+      email,
     });
     if (existingOtp) {
       const deleteOldOtp = await Otp.findByIdAndDelete(existingOtp._id, {
@@ -38,30 +38,21 @@ export async function POST(req: NextRequest) {
     const nanoid = customAlphabet("0123456789", 6);
 
     const otp = nanoid(); // e.g., '483920'
-    const newOtp = await Otp.create({ userIdentifier, otp }, { session });
-    if (!newOtp) {
+    const newOtp = await Otp.create([{ email, otp }], { session });
+    if (!newOtp || newOtp.length === 0) {
       return NextResponse.json(
         new ApiError(500, "Internal server error in creating new otp"),
         { status: 500 }
       );
     }
 
-    const isTypeEmail = isEmail(userIdentifier);
-    const isTypePhone = isPhone(userIdentifier);
-
-
-    // TODO add send email and message functionality
-
-    
-    if (isTypeEmail) {
-    } else if (isTypePhone) {
-    } else {
+    const sendEmailtoId = await SendEmail(otp, email);
+    if (!sendEmailtoId) {
       return NextResponse.json(
-        new ApiError(400, "Please enter a valid email or phone number"),
-        { status: 400 }
+        new ApiError(500, "Error in sending email, pleaase try again"),
+        { status: 500 }
       );
     }
-
     await session.commitTransaction();
     session.endSession();
     return NextResponse.json(
