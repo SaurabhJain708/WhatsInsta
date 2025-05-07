@@ -17,6 +17,7 @@ export interface Iuser extends Document {
   comparePassword(password: string): Promise<boolean>;
   generateRefreshToken(): string;
   generateAccessToken(): string;
+  isVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,6 +72,11 @@ const userSchema: mongoose.Schema<Iuser> = new mongoose.Schema<Iuser>(
       type: String,
       required: false,
       select: false,
+    },
+    isVerified: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
   },
   { timestamps: true }
