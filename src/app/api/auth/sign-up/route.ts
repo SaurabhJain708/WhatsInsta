@@ -1,5 +1,6 @@
 import { ApiError } from "@/lib/ApiError";
 import { ApiResponse } from "@/lib/ApiResponse";
+import { GenerateTokens } from "@/lib/generateAccess&RefreshToken";
 import { mongoDb } from "@/lib/mongodb";
 import { Iotp, Otp } from "@/models/otp.model";
 import { Iuser, User } from "@/models/user.model";
@@ -45,22 +46,16 @@ export async function POST(req: NextRequest) {
         status: 400,
       });
     }
-    const newUser = await User.create(
-      {
-        name,
-        email: email,
-        provider: "credentials",
-      },
-      { session }
-    );
-    if (!newUser) {
-      await session.abortTransaction();
-      session.endSession();
-      return NextResponse.json(
-        new ApiError(500, "Internal server error, User creation failed"),
-        { status: 500 }
-      );
-    }
+    const newUser = new User({ name, email, provider: "credentials" });
+    await newUser.save({ session });
+    // if (!newUser) {
+    //   await session.abortTransaction();
+    //   session.endSession();
+    //   return NextResponse.json(
+    //     new ApiError(500, "Internal server error, User creation failed"),
+    //     { status: 500 }
+    //   );
+    // }
     const deleteOtp = await Otp.findByIdAndDelete(hasOtp._id).session(session);
     if (!deleteOtp) {
       await session.abortTransaction();
@@ -70,9 +65,19 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
+    const token = await GenerateTokens(newUser._id.toString());
+    if (!token || typeof token === "boolean") {
+      await session.abortTransaction();
+      session.endSession();
+      return NextResponse.json(
+        new ApiError(500, "Internal server error, token creation failed"),
+        { status: 500 }
+      );
+    }
+
     await session.commitTransaction();
     session.endSession();
-    return NextResponse.json(
+    const response = NextResponse.json(
       new ApiResponse(
         201,
         newUser,
@@ -80,6 +85,20 @@ export async function POST(req: NextRequest) {
       ),
       { status: 201 }
     );
+    response.cookies.set("accessToken", token.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Only secure in production
+      sameSite: "strict", // Adjust to your needs, 'strict' is safer
+      path: "/", // Accessible throughout the entire app
+    });
+
+    response.cookies.set("refreshToken", token.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Only secure in production
+      sameSite: "strict",
+      path: "/",
+    });
+    return response;
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
