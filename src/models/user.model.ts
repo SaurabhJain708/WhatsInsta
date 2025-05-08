@@ -13,6 +13,8 @@ export interface Iuser extends Document {
   isOnline: Boolean;
   email?: string;
   refreshToken?: string;
+  areDetailsComplete:boolean;
+  provider:"google"|"credentials";
   comparePassword(password: string): Promise<boolean>;
   generateRefreshToken(): string;
   generateAccessToken(): string;
@@ -72,6 +74,16 @@ const userSchema: mongoose.Schema<Iuser> = new mongoose.Schema<Iuser>(
       required: true,
       default: false,
     },
+    areDetailsComplete:{
+      type:Boolean,
+      required:true,
+      default:false
+    },
+    provider:{
+      type:String,
+      enum:["google","credentials"],
+      required:true
+    }
   },
   { timestamps: true }
 );
