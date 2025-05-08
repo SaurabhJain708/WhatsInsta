@@ -4,9 +4,12 @@ import { CheckAuth } from "@/lib/checkAuth";
 import { mongoDb } from "@/lib/mongodb";
 import { setAuthCookies } from "@/lib/resetCookies";
 import { User } from "@/models/user.model";
+import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  await mongoDb();
+  const session = await mongoose.startSession();
   try {
     const { readytocreate, username } = await req.json();
 
@@ -17,13 +20,14 @@ export async function POST(req: NextRequest) {
         status: 403,
       });
     }
-
-    await mongoDb();
+    session.startTransaction();
     const normalisedUsername = username.trim().toLowerCase();
     const checkexistingUsername = await User.findOne({
       username: normalisedUsername,
     });
     if (checkexistingUsername) {
+      await session.abortTransaction();
+      session.endSession();
       return NextResponse.json(new ApiError(400, "Username already exists"), {
         status: 400,
       });
@@ -31,10 +35,16 @@ export async function POST(req: NextRequest) {
     if (readytocreate || readytocreate === "true") {
       const newUsername = await User.findByIdAndUpdate(
         AuthContents.user._id,
-        { username },
-        { new: true }
+        { username, isVerified: true },
+        { new: true, session }
       );
+      if (newUsername?.provider === "google") {
+        newUsername.areDetailsComplete = true;
+        await newUsername.save({ session });
+      }
       if (!newUsername) {
+        await session.abortTransaction();
+        session.endSession();
         return NextResponse.json(
           new ApiError(500, "Internal server error while updating username"),
           { status: 500 }
@@ -55,7 +65,8 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.log(error);
-
+    await session.abortTransaction();
+    session.endSession();
     return NextResponse.json(new ApiError(500, `Internal server error`), {
       status: 500,
     });

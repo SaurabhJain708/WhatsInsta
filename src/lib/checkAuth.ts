@@ -9,6 +9,8 @@ export interface Ireturn {
   isTokenModified: boolean;
   accessToken: string;
   refreshToken: string;
+  isVerified: boolean;
+  areDetailsComplete: boolean;
 }
 
 export async function CheckAuth(req: NextRequest): Promise<boolean | Ireturn> {
@@ -57,7 +59,14 @@ export async function CheckAuth(req: NextRequest): Promise<boolean | Ireturn> {
     if (!user) {
       return false;
     }
-    return { user, isTokenModified, accessToken, refreshToken };
+    return {
+      user,
+      isTokenModified,
+      accessToken,
+      refreshToken,
+      isVerified: user.isVerified,
+      areDetailsComplete: user.areDetailsComplete,
+    };
   } catch (error) {
     console.log(error);
     return false;
