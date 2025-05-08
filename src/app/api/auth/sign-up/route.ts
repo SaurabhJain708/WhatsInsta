@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       );
     }
     const token = await GenerateTokens(newUser._id.toString());
-    if (!token || typeof token === "boolean") {
+    if (!token || typeof token ==="boolean") {
       await session.abortTransaction();
       session.endSession();
       return NextResponse.json(
