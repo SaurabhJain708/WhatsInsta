@@ -48,14 +48,6 @@ export async function POST(req: NextRequest) {
     }
     const newUser = new User({ name, email, provider: "credentials" });
     await newUser.save({ session });
-    // if (!newUser) {
-    //   await session.abortTransaction();
-    //   session.endSession();
-    //   return NextResponse.json(
-    //     new ApiError(500, "Internal server error, User creation failed"),
-    //     { status: 500 }
-    //   );
-    // }
     const deleteOtp = await Otp.findByIdAndDelete(hasOtp._id).session(session);
     if (!deleteOtp) {
       await session.abortTransaction();
@@ -66,7 +58,7 @@ export async function POST(req: NextRequest) {
       );
     }
     const token = await GenerateTokens(newUser._id.toString());
-    if (!token || typeof token ==="boolean") {
+    if (!token || typeof token === "boolean") {
       await session.abortTransaction();
       session.endSession();
       return NextResponse.json(
@@ -100,9 +92,10 @@ export async function POST(req: NextRequest) {
     });
     return response;
   } catch (error) {
+    console.log(error);
     await session.abortTransaction();
     session.endSession();
-    return NextResponse.json(new ApiError(500, `Server error: ${error}`), {
+    return NextResponse.json(new ApiError(500, `Server error`), {
       status: 500,
     });
   }
