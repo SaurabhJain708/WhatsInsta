@@ -8,12 +8,14 @@ export function setAuthCookies(response: NextResponse, AuthContents: Ireturn) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
+      maxAge: 60 * 60,
     });
     response.cookies.set("refreshToken", AuthContents.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
   }
 }

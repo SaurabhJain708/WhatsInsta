@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === "production", // Only secure in production
       sameSite: "strict", // Adjust to your needs, 'strict' is safer
       path: "/", // Accessible throughout the entire app
+      maxAge: 60 * 60,
     });
 
     response.cookies.set("refreshToken", token.refreshToken, {
@@ -89,6 +90,7 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === "production", // Only secure in production
       sameSite: "strict",
       path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
     return response;
   } catch (error) {

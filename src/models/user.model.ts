@@ -7,7 +7,7 @@ export interface Iuser extends Document {
   name: string;
   username: string;
   password?: string;
-  about: String; // user status
+  about: String;
   profilePicUrl: String;
   lastSeen: Date;
   isOnline: Boolean;
