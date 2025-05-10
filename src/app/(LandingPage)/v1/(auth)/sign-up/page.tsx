@@ -1,38 +1,63 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FcGoogle } from "react-icons/fc";
-import { AiOutlineMail } from "react-icons/ai";
+import { AiFillLock, AiOutlineMail } from "react-icons/ai";
 import { BsPerson } from "react-icons/bs";
 import Link from "next/link";
+import { useState } from "react";
 
 // Zod validation schema
 const signupSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Please enter a valid email address"),
+  otp: z
+    .string()
+    .length(6, "OTP must be 6 digits")
+    .regex(/^\d+$/, "OTP must be digits only"),
 });
 
+const emailSchema = z.string().email();
+
 export default function SignupPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [otp, setOtp] = useState(false);
+  const [email, setEmail] = useState("");
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(signupSchema),
   });
 
-  const onSubmit = async (data: unknown) => {
-    setIsSubmitting(true);
-    // Here you would typically call your API to handle the signup
-    console.log("Form data submitted:", data);
+  const onSubmit = async (data: z.infer<typeof signupSchema>) => {
+    console.log("Form data:", data);
+    try {
+      const response = await fetch("/api/auth/sign-up", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          otp: data.otp,
+        }),
+      });
+
+      const result = await response.json();
+      console.log("Server response:", result);
+
+      // Handle success (e.g., redirect, toast, etc.)
+    } catch (error) {
+      console.error("Signup error:", error);
+      // Handle error (e.g., show toast)
+    }
 
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
   };
 
   const handleGoogleSignup = () => {
@@ -40,6 +65,24 @@ export default function SignupPage() {
     console.log("Google signup clicked");
   };
 
+  const sendOtp = async () => {
+    const isemailvalid = emailSchema.safeParse(email);
+    if (!isemailvalid) {
+      return;
+    }
+    const response = await fetch("/api/auth/generate-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+      }),
+    });
+
+    const result = await response.json();
+    console.log(result);
+  };
   return (
     <div className="flex items-center justify-center min-h-screen bg-green-50 px-4">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
@@ -103,6 +146,10 @@ export default function SignupPage() {
                   } shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm h-10`}
                   placeholder="you@example.com"
                   {...register("email")}
+                  onChange={(e) => {
+                    setOtp(true);
+                    setEmail(e.target.value);
+                  }}
                 />
               </div>
               {errors.email && (
@@ -111,6 +158,44 @@ export default function SignupPage() {
                 </p>
               )}
             </div>
+            <div className="mt-2">
+              <button
+                type="button"
+                className="text-sm text-green-600 hover:underline cursor-pointer disabled:opacity-50"
+                onClick={sendOtp}
+              >
+                Send OTP
+              </button>
+            </div>
+            {otp && (
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Verify OTP
+                </label>
+                <div className="relative mt-1">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <AiFillLock className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="otp"
+                    type="text"
+                    className={`pl-10 block w-full rounded-md border ${
+                      errors.otp ? "border-red-300" : "border-gray-300"
+                    } shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm h-10`}
+                    placeholder="otp"
+                    {...register("otp")}
+                  />
+                </div>
+                {errors.otp && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.otp.message}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div>

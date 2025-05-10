@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 export interface Iuser extends Document {
   _id: mongoose.Types.ObjectId;
   name: string;
-  username: string;
+  username?: string;
   password?: string;
   about: String;
   profilePicUrl: String;
@@ -32,7 +32,6 @@ const userSchema: mongoose.Schema<Iuser> = new mongoose.Schema<Iuser>(
     },
     username: {
       type: String,
-      required: true,
       unique: true,
       trim: true,
     },

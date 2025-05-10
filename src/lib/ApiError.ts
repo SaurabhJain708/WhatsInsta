@@ -10,8 +10,9 @@ class ApiError extends Error {
       errors: Array<unknown> = [],
       stack: string = ""
     ) {
-      super(message);
+      super()
       this.statusCode = statusCode;
+      this.message = message;
       this.data = null;
       this.success = false;
       this.errors = errors;

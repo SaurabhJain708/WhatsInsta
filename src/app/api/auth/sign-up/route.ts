@@ -57,14 +57,19 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    const token = await GenerateTokens(newUser._id.toString());
+    const token = await GenerateTokens(email, newUser);
     if (!token || typeof token === "boolean") {
+      console.log(token);
       await session.abortTransaction();
       session.endSession();
       return NextResponse.json(
         new ApiError(500, "Internal server error, token creation failed"),
-        { status: 500 }
+        { status: 502 }
       );
+    }
+    const tokenUser = token.user;
+    if (tokenUser) {
+      await tokenUser.save({ session });
     }
 
     await session.commitTransaction();

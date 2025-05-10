@@ -40,15 +40,8 @@ export async function POST(req: NextRequest) {
     const nanoid = customAlphabet("0123456789", 6);
 
     const otp = nanoid(); // e.g., '483920'
-    const newOtp = await Otp.create({ email, otp }, { session });
-    if (!newOtp) {
-      await session.abortTransaction();
-      session.endSession();
-      return NextResponse.json(
-        new ApiError(500, "Internal server error in creating new otp"),
-        { status: 500 }
-      );
-    }
+    const newOtpDoc = new Otp({ email, otp });
+    await newOtpDoc.save({ session });
 
     const sendEmailtoId = await SendEmail(otp, email);
     if (!sendEmailtoId) {
@@ -66,10 +59,12 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    console.log(error);
     await session.abortTransaction();
     session.endSession();
     return NextResponse.json(
-      new ApiError(500, `Internal server error: ${error}`)
+      new ApiError(500, `Internal server error: ${error}`),
+      { status: 500 }
     );
   }
 }

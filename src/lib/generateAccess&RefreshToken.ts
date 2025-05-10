@@ -4,11 +4,22 @@ import { mongoDb } from "./mongodb";
 interface IReturn {
   accessToken: string;
   refreshToken: string;
+  user?: Iuser;
 }
-export async function GenerateTokens(id: string): Promise<IReturn | boolean> {
+export async function GenerateTokens(
+  email: string,
+  userIn?: Iuser
+): Promise<IReturn | boolean> {
   try {
     await mongoDb();
-    const user: null | Iuser = await User.findById(id);
+    if (userIn) {
+      const refreshToken = userIn.generateRefreshToken();
+      userIn.refreshToken = refreshToken;
+      const accessToken = userIn.generateAccessToken();
+      return { accessToken, refreshToken, user: userIn };
+    }
+    const user: null | Iuser = await User.findOne({ email });
+    console.log(user);
     if (!user) {
       return false;
     }

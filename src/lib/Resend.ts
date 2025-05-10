@@ -10,7 +10,9 @@ export async function SendEmail(otp: string, recipient: string) {
       subject: "Your OTP Code",
       html: `<p>Your OTP code is <strong>${otp}</strong>. It will expire in 5 minutes.</p>`,
     });
+    console.log("I am working")
     if (data.data?.id) {
+      console.log("Email sent successfully:", data.data.id);
       return true;
     }
     return false;
