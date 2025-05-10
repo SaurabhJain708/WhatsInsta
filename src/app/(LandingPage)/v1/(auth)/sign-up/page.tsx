@@ -8,6 +8,7 @@ import { AiFillLock, AiOutlineMail } from "react-icons/ai";
 import { BsPerson } from "react-icons/bs";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 
 // Zod validation schema
 const signupSchema = z.object({
@@ -48,6 +49,12 @@ export default function SignupPage() {
       });
 
       const result = await response.json();
+      toast(result.message, {
+        action: {
+          label: "x",
+          onClick: () => console.log("Closed toast"),
+        },
+      });
       console.log("Server response:", result);
 
       // Handle success (e.g., redirect, toast, etc.)
