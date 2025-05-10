@@ -3,6 +3,7 @@ import { ApiResponse } from "@/lib/ApiResponse";
 import { CheckAuth } from "@/lib/checkAuth";
 import { mongoDb } from "@/lib/mongodb";
 import { setAuthCookies } from "@/lib/resetCookies";
+import { errorResponse } from "@/lib/responseFuncs/errorResponse";
 import { User } from "@/models/user.model";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
     //check Auth
     const AuthContents = await CheckAuth(req);
     if (!AuthContents || typeof AuthContents === "boolean") {
+      console.log(AuthContents);
       return NextResponse.json(new ApiError(403, "Authentication Failed"), {
         status: 403,
       });
@@ -33,27 +35,27 @@ export async function POST(req: NextRequest) {
       });
     }
     if (readytocreate || readytocreate === "true") {
-      const newUsername = await User.findByIdAndUpdate(
-        AuthContents.user._id,
-        { username, isVerified: true },
-        { new: true, session }
-      );
+      const newUsername = await User.findById(AuthContents.user._id);
+      if (!newUsername) {
+        await session.abortTransaction();
+        session.endSession();
+        return errorResponse(500, "Database error");
+      }
+      newUsername.username = username;
+      newUsername.isVerified = true;
       if (newUsername?.provider === "google") {
         newUsername.areDetailsComplete = true;
         await newUsername.save({ session });
       }
-      if (!newUsername) {
-        await session.abortTransaction();
-        session.endSession();
-        return NextResponse.json(
-          new ApiError(500, "Internal server error while updating username"),
-          { status: 500 }
-        );
+      if (newUsername?.provider === "credentials") {
+        await newUsername.save({ session });
       }
       const response = NextResponse.json(
         new ApiResponse(201, newUsername, "username created successfully"),
         { status: 201 }
       );
+      await session.commitTransaction();
+      session.endSession();
       setAuthCookies(response, AuthContents);
       return response;
     }

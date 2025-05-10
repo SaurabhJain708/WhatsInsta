@@ -28,7 +28,7 @@ export async function CheckAuth(req: NextRequest): Promise<boolean | Ireturn> {
     try {
       const payload = jwt.verify(
         accessToken,
-        process.env.ACCESSTOKEN_SECRET!
+        process.env.ACCESS_TOKEN_SECRET!
       ) as { id: string };
       id = payload.id;
     } catch (error) {
@@ -47,7 +47,7 @@ export async function CheckAuth(req: NextRequest): Promise<boolean | Ireturn> {
         id = payload.id;
         isTokenModified = true;
       } else if (error instanceof JsonWebTokenError) {
-        console.error("Token is invalid");
+        console.error("Token is invalid",accessToken);
         return false;
       } else {
         console.error("Unknown JWT error:", error);

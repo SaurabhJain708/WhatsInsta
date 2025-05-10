@@ -42,17 +42,24 @@ export default function CreateUsernamePage() {
         }),
       });
       const result = await response.json();
+      console.log(result);
       toast(result.message, {
         action: {
           label: "x",
           onClick: () => console.log("Closed toast"),
         },
       });
-      if (result.statusCode === 201) {
+      if (result.statusCode === 201 && result.data.areDetailsComplete) {
+        router.back();
+      } else if (
+        result.statusCode === 201 &&
+        !result.data.areDetailsComplete
+      ) {
         router.push("/v1/create-password");
       }
     } catch (error) {
-      toast("Failed to coonect, Please try again", {
+      console.error("Error:", error);
+      toast("Failed to connect, Please try again", {
         action: {
           label: "x",
           onClick: () => console.log("Closed toast"),
