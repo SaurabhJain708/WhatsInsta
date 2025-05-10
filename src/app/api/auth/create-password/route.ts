@@ -20,6 +20,11 @@ export async function POST(req: NextRequest) {
         status: 403,
       });
     }
+    if (!AuthContents.user.isVerified) {
+      return NextResponse.json(new ApiError(403, "User is not verified"), {
+        status: 403,
+      });
+    }
     const user = AuthContents.user;
     user.areDetailsComplete = true;
     user.password = password;

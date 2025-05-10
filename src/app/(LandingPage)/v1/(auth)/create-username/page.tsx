@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AiOutlineUser } from "react-icons/ai";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // Validation schema
 const usernameSchema = z.object({
@@ -18,20 +20,45 @@ const usernameSchema = z.object({
 });
 
 export default function CreateUsernamePage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(usernameSchema),
   });
 
-  const onSubmit = async (data: unknown) => {
-    setIsSubmitting(true);
-    console.log("Creating username:", data);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
+  const onSubmit = async (data: z.infer<typeof usernameSchema>) => {
+    try {
+      const response = await fetch("/api/auth/create-username", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: data.username,
+          readytocreate: true,
+        }),
+      });
+      const result = await response.json();
+      toast(result.message, {
+        action: {
+          label: "x",
+          onClick: () => console.log("Closed toast"),
+        },
+      });
+      if (result.statusCode === 201) {
+        router.push("/v1/create-password");
+      }
+    } catch (error) {
+      toast("Failed to coonect, Please try again", {
+        action: {
+          label: "x",
+          onClick: () => console.log("Closed toast"),
+        },
+      });
+    }
   };
 
   return (

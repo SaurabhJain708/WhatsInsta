@@ -109,7 +109,7 @@ userSchema.methods.generateAccessToken = function (): string {
     },
     secretKey,
     {
-      expiresIn: "1d",
+      expiresIn: "30m",
     }
   );
 };
@@ -122,7 +122,7 @@ userSchema.methods.generateRefreshToken = function (): string {
     },
     secretKey,
     {
-      expiresIn: "10d",
+      expiresIn: "5d",
     }
   );
 };

@@ -9,6 +9,7 @@ import { BsPerson } from "react-icons/bs";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 // Zod validation schema
 const signupSchema = z.object({
@@ -23,6 +24,9 @@ const signupSchema = z.object({
 const emailSchema = z.string().email();
 
 export default function SignupPage() {
+  const [allowOtp, setAllowOtp] = useState(true);
+  const [otpCounter, setOtpCounter] = useState(30);
+  const router = useRouter();
   const [otp, setOtp] = useState(false);
   const [email, setEmail] = useState("");
   const {
@@ -57,14 +61,24 @@ export default function SignupPage() {
       });
       console.log("Server response:", result);
 
-      // Handle success (e.g., redirect, toast, etc.)
+      if (result.statusCode === 201) {
+        router.push("/v1/create-username");
+      } else if (result.statusCode === 409) {
+        router.push("/v1/login");
+      } else if (result.statusCode === 422) {
+        router.push("/v1/create-username");
+      } else if (result.statusCode === 411) {
+        router.push("/v1/create-password");
+      }
     } catch (error) {
+      toast("An error occurred. Please try again.", {
+        action: {
+          label: "x",
+          onClick: () => console.log("Closed toast"),
+        },
+      });
       console.error("Signup error:", error);
-      // Handle error (e.g., show toast)
     }
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
   };
 
   const handleGoogleSignup = () => {
@@ -77,6 +91,7 @@ export default function SignupPage() {
     if (!isemailvalid) {
       return;
     }
+    setAllowOtp(false);
     const response = await fetch("/api/auth/generate-otp", {
       method: "POST",
       headers: {
@@ -88,8 +103,29 @@ export default function SignupPage() {
     });
 
     const result = await response.json();
+    toast(result.message, {
+      action: {
+        label: "x",
+        onClick: () => console.log("Closed toast"),
+      },
+    });
+    if (result.statusCode !== 201) {
+      setAllowOtp(true);
+    } else if (result.statusCode === 201) {
+      const interval = setInterval(() => {
+        setOtpCounter((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setAllowOtp(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
     console.log(result);
   };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-green-50 px-4">
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
@@ -169,9 +205,10 @@ export default function SignupPage() {
               <button
                 type="button"
                 className="text-sm text-green-600 hover:underline cursor-pointer disabled:opacity-50"
+                disabled={!allowOtp}
                 onClick={sendOtp}
               >
-                Send OTP
+                {allowOtp ? "Send Otp" : `Resend in ${otpCounter}s`}
               </button>
             </div>
             {otp && (
