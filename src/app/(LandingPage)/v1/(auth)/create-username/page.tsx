@@ -51,10 +51,7 @@ export default function CreateUsernamePage() {
       });
       if (result.statusCode === 201 && result.data.areDetailsComplete) {
         router.back();
-      } else if (
-        result.statusCode === 201 &&
-        !result.data.areDetailsComplete
-      ) {
+      } else if (result.statusCode === 201 && !result.data.areDetailsComplete) {
         router.push("/v1/create-password");
       }
     } catch (error) {
