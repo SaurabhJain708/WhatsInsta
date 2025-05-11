@@ -6,6 +6,8 @@ import { z } from "zod";
 import { useState } from "react";
 import { AiOutlineLock } from "react-icons/ai";
 import { BsEye, BsEyeSlash } from "react-icons/bs";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // Validation schema
 const passwordSchema = z
@@ -19,22 +21,53 @@ const passwordSchema = z
   });
 
 export default function CreatePasswordPage() {
+  const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(passwordSchema),
   });
 
-  const onSubmit = async (data: unknown) => {
-    setIsSubmitting(true);
-    console.log("Password set:", data);
-    await new Promise((res) => setTimeout(res, 1000));
-    setIsSubmitting(false);
+  const onSubmit = async (data: z.infer<typeof passwordSchema>) => {
+    try {
+      const response = await fetch("/api/auth/create-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: data.password,
+        }),
+        credentials: "include",
+      });
+      const result = await response.json();
+      if (result.statusCode === 200) {
+        router.push("/v2/dashboard");
+      } else if (result.statusCode === 403) {
+        router.push("/v1/login");
+      } else if (result.statusCode === 411) {
+        router.push("/v1/create-username");
+      }
+
+      toast(result.message, {
+        action: {
+          label: "x",
+          onClick: () => console.log("Closed toast"),
+        },
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      toast("Failed to connect, Please try again", {
+        action: {
+          label: "x",
+          onClick: () => console.log("Closed toast"),
+        },
+      });
+    }
   };
 
   return (
@@ -130,7 +163,7 @@ export default function CreatePasswordPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition font-semibold"
+            className="w-full cursor-pointer bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition font-semibold"
           >
             {isSubmitting ? "Saving..." : "Continue"}
           </button>
