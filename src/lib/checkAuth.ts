@@ -37,7 +37,7 @@ export async function CheckAuth(req: NextRequest): Promise<boolean | Ireturn> {
       if (error instanceof TokenExpiredError || JsonWebTokenError) {
         console.error("Token has expired");
         const tokens = await RegenerateAccessRefreshToken(refreshToken);
-        console.log(tokens)
+        console.log(tokens);
         if (!tokens || typeof tokens === "boolean") {
           return false;
         }
