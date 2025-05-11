@@ -16,11 +16,12 @@ export interface Ireturn {
 export async function CheckAuth(req: NextRequest): Promise<boolean | Ireturn> {
   try {
     await mongoDb();
-    let accessToken = req.cookies.get("accessToken")?.value;
+    let accessToken = req.cookies.get("accessToken")?.value ?? "";
     let refreshToken = req.cookies.get("refreshToken")?.value;
     let id: string;
     let isTokenModified: boolean = false;
-    if (!accessToken || !refreshToken) {
+    if (!refreshToken) {
+      console.log("No tokens found");
       return false;
     }
 
@@ -30,25 +31,25 @@ export async function CheckAuth(req: NextRequest): Promise<boolean | Ireturn> {
         accessToken,
         process.env.ACCESS_TOKEN_SECRET!
       ) as { id: string };
+      console.log(payload);
       id = payload.id;
     } catch (error) {
-      if (error instanceof TokenExpiredError) {
+      if (error instanceof TokenExpiredError || JsonWebTokenError) {
         console.error("Token has expired");
         const tokens = await RegenerateAccessRefreshToken(refreshToken);
+        console.log(tokens)
         if (!tokens || typeof tokens === "boolean") {
           return false;
         }
+        console.log("Tokens regenerated");
         accessToken = tokens.accessToken;
         refreshToken = tokens.refreshToken;
         const payload = jwt.verify(
           accessToken,
-          process.env.ACCESSTOKEN_SECRET!
+          process.env.ACCESS_TOKEN_SECRET!
         ) as { id: string };
         id = payload.id;
         isTokenModified = true;
-      } else if (error instanceof JsonWebTokenError) {
-        console.error("Token is invalid",accessToken);
-        return false;
       } else {
         console.error("Unknown JWT error:", error);
         return false;
@@ -57,6 +58,7 @@ export async function CheckAuth(req: NextRequest): Promise<boolean | Ireturn> {
 
     const user = await User.findById(id);
     if (!user) {
+      console.log("User not found");
       return false;
     }
     return {

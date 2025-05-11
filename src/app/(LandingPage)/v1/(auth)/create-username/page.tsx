@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AiOutlineUser } from "react-icons/ai";
+import { AiOutlineCheckCircle, AiOutlineCloseCircle, AiOutlineUser } from "react-icons/ai";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // Validation schema
 const usernameSchema = z.object({
@@ -20,6 +21,10 @@ const usernameSchema = z.object({
 });
 
 export default function CreateUsernamePage() {
+  const [username, setUsername] = useState("");
+  const debouncedUsername = useDebounce(username, 1000);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
+  const [isUsernameChecked, setIsUsernameChecked] = useState(false);
   const router = useRouter();
   const {
     register,
@@ -28,6 +33,8 @@ export default function CreateUsernamePage() {
   } = useForm({
     resolver: zodResolver(usernameSchema),
   });
+
+  
 
   const onSubmit = async (data: z.infer<typeof usernameSchema>) => {
     try {
@@ -40,6 +47,7 @@ export default function CreateUsernamePage() {
           username: data.username,
           readytocreate: true,
         }),
+        credentials: "include"
       });
       const result = await response.json();
       console.log(result);
@@ -65,6 +73,59 @@ export default function CreateUsernamePage() {
     }
   };
 
+  const handleCheckUsername = async (value: string) => {
+    const isValid = usernameSchema.safeParse({ username: value });
+    if (!isValid.success) {
+      setIsUsernameAvailable(false);
+      setIsUsernameChecked(true);
+      return;
+    }
+      try {
+        const response = await fetch("/api/auth/create-username", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username: value,
+          }),
+          credentials: "include"
+        });
+        console.log("Response:", response);
+        const result = await response.json();
+        console.log(result);
+        setIsUsernameChecked(true);
+        if (result.statusCode === 200) {
+          toast(result.message, {
+            action: {
+              label: "x",
+              onClick: () => console.log("Closed toast"),
+            },
+          });
+          setIsUsernameAvailable(true);
+        } else {
+          toast(result.message, {
+            action: {
+              label: "x",
+              onClick: () => console.log("Closed toast"),
+            },
+          });
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        toast("Failed to connect, Please try again", {
+          action: {
+            label: "x",
+            onClick: () => console.log("Closed toast"),
+          },
+        });
+      }
+    
+  };
+
+  useEffect(()=>{
+    handleCheckUsername(username);
+},[debouncedUsername])
   return (
     <div className="flex items-center justify-center min-h-screen bg-green-50 px-4">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg space-y-6">
@@ -96,8 +157,25 @@ export default function CreateUsernamePage() {
                 } rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm h-10`}
                 placeholder="Choose a username"
                 {...register("username")}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                }}
               />
+              {isUsernameChecked && (
+                <div className="absolute top-3.5 right-3">
+                  {isUsernameAvailable ? (
+                    <AiOutlineCheckCircle color="green" />
+                  ) : (
+                    <AiOutlineCloseCircle color="red" />
+                  )}
+                </div>
+              )}
             </div>
+            {!isUsernameAvailable && isUsernameChecked && (
+              <p className="text-xs text-red-600 mt-1">
+                Username not available
+              </p>
+            )}
             {errors.username && (
               <p className="text-xs text-red-600 mt-1">
                 {errors.username.message}

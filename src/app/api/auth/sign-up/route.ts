@@ -46,7 +46,10 @@ export async function POST(req: NextRequest) {
       const token = await GenerateTokens(email, existingUser);
       if (!token || typeof token === "boolean") {
         return NextResponse.json(
-          new ApiError(500, "Internal server error, token creation failed"),
+          new ApiError(
+            500,
+            "Internal server error, token creation failed. Please try again"
+          ),
           { status: 500 }
         );
       }
@@ -56,6 +59,13 @@ export async function POST(req: NextRequest) {
       }
 
       if (!existingUser.isVerified && isOtpCorrect) {
+        const deleteOtp = await Otp.findByIdAndDelete(hasOtp._id)
+        if (!deleteOtp) {
+          return NextResponse.json(
+            new ApiError(500, "Internal server error, Otp deletion failed"),
+            { status: 500 }
+          );
+        }
         const response = NextResponse.json(
           new ApiError(422, "User already exists, please verify"),
           { status: 422 }
@@ -79,6 +89,13 @@ export async function POST(req: NextRequest) {
         return response;
       }
       if (!existingUser.areDetailsComplete && isOtpCorrect) {
+        const deleteOtp = await Otp.findByIdAndDelete(hasOtp._id)
+        if (!deleteOtp) {
+          return NextResponse.json(
+            new ApiError(500, "Internal server error, Otp deletion failed"),
+            { status: 500 }
+          );
+        }
         const response = NextResponse.json(
           new ApiError(411, "User already exists, please complete details"),
           { status: 411 }

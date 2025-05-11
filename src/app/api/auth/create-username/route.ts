@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     //check Auth
     const AuthContents = await CheckAuth(req);
-    if (!AuthContents || typeof AuthContents === "boolean") {
+    if (!AuthContents || typeof AuthContents === "boolean") { 
       console.log(AuthContents);
       return NextResponse.json(new ApiError(403, "Authentication Failed"), {
         status: 403,
@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
     setAuthCookies(response, AuthContents);
+    console.log("Response", response);
     return response;
   } catch (error) {
     console.log(error);
