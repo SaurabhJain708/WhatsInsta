@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { ApiResponse } from "../ApiResponse";
 import { Ireturn } from "../checkAuth";
 
-export function resultResponse(
+export function cookieResultResponse(
   statusCode: number,
   data: unknown | null,
   message: string,

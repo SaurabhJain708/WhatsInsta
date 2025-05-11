@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
 import { AiOutlineLock } from "react-icons/ai";
+import { BsEye, BsEyeSlash } from "react-icons/bs";
 
 // Validation schema
 const passwordSchema = z
@@ -18,6 +19,8 @@ const passwordSchema = z
   });
 
 export default function CreatePasswordPage() {
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     register,
@@ -38,14 +41,19 @@ export default function CreatePasswordPage() {
     <div className="flex items-center justify-center min-h-screen bg-green-50 px-4">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg space-y-6">
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-green-700 mb-2">KrishiSaarthi</h1>
+          <h1 className="text-4xl font-extrabold text-green-700 mb-2">
+            KrishiSaarthi
+          </h1>
           <p className="text-sm text-gray-600">Create a strong password</p>
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
           {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Password
             </label>
             <div className="relative mt-1">
@@ -54,22 +62,35 @@ export default function CreatePasswordPage() {
               </div>
               <input
                 id="password"
-                type="password"
+                type={passwordVisible ? "text" : "password"}
                 className={`pl-10 w-full border ${
                   errors.password ? "border-red-300" : "border-gray-300"
                 } rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm h-10`}
                 placeholder="Enter password"
                 {...register("password")}
               />
+              <div
+                className="absolute top-3.5 right-4 cursor-pointer"
+                onClick={() => {
+                  setPasswordVisible((prev) => !prev);
+                }}
+              >
+                {passwordVisible ? <BsEyeSlash /> : <BsEye color="black" />}
+              </div>
             </div>
             {errors.password && (
-              <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>
+              <p className="text-xs text-red-600 mt-1">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
           {/* Confirm Password */}
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700"
+            >
               Confirm Password
             </label>
             <div className="relative mt-1">
@@ -78,16 +99,30 @@ export default function CreatePasswordPage() {
               </div>
               <input
                 id="confirmPassword"
-                type="password"
+                type={confirmPasswordVisible ? "text" : "password"}
                 className={`pl-10 w-full border ${
                   errors.confirmPassword ? "border-red-300" : "border-gray-300"
                 } rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm h-10`}
                 placeholder="Re-enter password"
                 {...register("confirmPassword")}
               />
+              <div
+                className="absolute top-3.5 right-4 cursor-pointer"
+                onClick={() => {
+                  setConfirmPasswordVisible((prev) => !prev);
+                }}
+              >
+                {confirmPasswordVisible ? (
+                  <BsEyeSlash />
+                ) : (
+                  <BsEye color="black" />
+                )}
+              </div>
             </div>
             {errors.confirmPassword && (
-              <p className="text-xs text-red-600 mt-1">{errors.confirmPassword.message}</p>
+              <p className="text-xs text-red-600 mt-1">
+                {errors.confirmPassword.message}
+              </p>
             )}
           </div>
 

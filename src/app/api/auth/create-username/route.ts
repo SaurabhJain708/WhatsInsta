@@ -1,9 +1,9 @@
 import { ApiError } from "@/lib/ApiError";
-import { ApiResponse } from "@/lib/ApiResponse";
 import { CheckAuth } from "@/lib/checkAuth";
 import { mongoDb } from "@/lib/mongodb";
-import { setAuthCookies } from "@/lib/resetCookies";
 import { errorResponse } from "@/lib/responseFuncs/errorResponse";
+import { cookieErrorResponse } from "@/lib/responseFuncs/errorResponseCookies";
+import { cookieResultResponse } from "@/lib/responseFuncs/resultResponsecookies";
 import { User } from "@/models/user.model";
 import mongoose from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
@@ -18,9 +18,7 @@ export async function POST(req: NextRequest) {
     const AuthContents = await CheckAuth(req);
     if (!AuthContents || typeof AuthContents === "boolean") { 
       console.log(AuthContents);
-      return NextResponse.json(new ApiError(403, "Authentication Failed"), {
-        status: 403,
-      });
+      return errorResponse(403, "Authentication Failed");
     }
     session.startTransaction();
     const normalisedUsername = username.trim().toLowerCase();
@@ -30,9 +28,7 @@ export async function POST(req: NextRequest) {
     if (checkexistingUsername) {
       await session.abortTransaction();
       session.endSession();
-      return NextResponse.json(new ApiError(400, "Username already exists"), {
-        status: 400,
-      });
+      return cookieErrorResponse(400, "Username already exists",AuthContents);
     }
     if (readytocreate || readytocreate === "true") {
       const newUsername = await User.findById(AuthContents.user._id);
@@ -50,22 +46,11 @@ export async function POST(req: NextRequest) {
       if (newUsername?.provider === "credentials") {
         await newUsername.save({ session });
       }
-      const response = NextResponse.json(
-        new ApiResponse(201, newUsername, "username created successfully"),
-        { status: 201 }
-      );
       await session.commitTransaction();
       session.endSession();
-      setAuthCookies(response, AuthContents);
-      return response;
+      return cookieResultResponse(201, newUsername, "username created successfully", AuthContents);
     }
-    const response = NextResponse.json(
-      new ApiResponse(200, null, "username is available"),
-      { status: 200 }
-    );
-    setAuthCookies(response, AuthContents);
-    console.log("Response", response);
-    return response;
+    return cookieResultResponse(200, null, "username is available", AuthContents);
   } catch (error) {
     console.log(error);
     await session.abortTransaction();

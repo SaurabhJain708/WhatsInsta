@@ -106,6 +106,8 @@ userSchema.methods.generateAccessToken = function (): string {
   return jwt.sign(
     {
       id: this._id,
+      isVerified: this.isVerified,
+      areDetailsComplete: this.areDetailsComplete,
     },
     secretKey,
     {
