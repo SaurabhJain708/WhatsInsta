@@ -18,7 +18,7 @@ const otpSchema = z.object({
 });
 
 export default function ConfirmOtpPage() {
-  const router = useRouter()
+  const router = useRouter();
   const [allowOtp, setAllowOtp] = useState(true);
   const [otpCounter, setOtpCounter] = useState(30);
   const [email, setEmail] = useState("");
@@ -68,7 +68,7 @@ export default function ConfirmOtpPage() {
         });
       }, 1000);
     }
-    setOtpCounter(30)
+    setOtpCounter(30);
     console.log(result);
   };
 
@@ -80,8 +80,8 @@ export default function ConfirmOtpPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          otp:data.otp,
-          email:data.email
+          otp: data.otp,
+          email: data.email,
         }),
         credentials: "include",
       });
@@ -97,9 +97,7 @@ export default function ConfirmOtpPage() {
           onClick: () => console.log("Closed toast"),
         },
       });
-    } catch (error) {
-      
-    }
+    } catch (error) {}
   };
 
   return (

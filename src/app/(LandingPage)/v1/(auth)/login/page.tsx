@@ -66,7 +66,15 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    console.log("Google login clicked");
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID; // Add your client ID from Google Developer Console
+    const redirectUri = `${process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI}`; // Your backend redirect URI
+    const scope = "openid profile email"; // Scopes you need
+    const responseType = "code"; // We want to receive the authorization code
+
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=${responseType}&scope=${scope}`;
+
+    // Redirect the user to Google's OAuth page
+    window.location.href = googleAuthUrl;
   };
 
   return (

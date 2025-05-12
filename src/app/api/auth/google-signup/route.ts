@@ -3,7 +3,6 @@ import axios from "axios";
 import { User } from "@/models/user.model";
 import { mongoDb } from "@/lib/mongodb";
 import { ApiError } from "@/lib/ApiError";
-import { ApiResponse } from "@/lib/ApiResponse";
 import { GenerateTokens } from "@/lib/generateAccess&RefreshToken";
 
 export async function GET(req: NextRequest) {
@@ -46,16 +45,23 @@ export async function GET(req: NextRequest) {
     //Existing User Login
     const alreadyUser = await User.findOne({ email: googleUser.email });
     if (alreadyUser) {
-      const token = await GenerateTokens(alreadyUser._id.toString());
+      const token = await GenerateTokens(alreadyUser.email!);
       if (!token || typeof token === "boolean") {
         return NextResponse.json(
           new ApiError(500, "Server error while generating tokens")
         );
       }
-      const response = NextResponse.json(
-        new ApiResponse(200, null, "Login successful"),
-        { status: 200 }
-      );
+      let response;
+      if (alreadyUser.areDetailsComplete) {
+        response = NextResponse.redirect(
+          `${process.env.NEXT_PUBLIC_URL}/v2/dashboard`
+        );
+      } else {
+        response = NextResponse.redirect(
+          `${process.env.NEXT_PUBLIC_URL}/v1/create-username`
+        );
+      }
+
       response.cookies.set("accessToken", token.accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production", // Only secure in production
@@ -85,16 +91,15 @@ export async function GET(req: NextRequest) {
         { status: 500 }
       );
     }
-    const token = await GenerateTokens(newUser._id.toString());
+    const token = await GenerateTokens(newUser.email!);
     if (!token || typeof token === "boolean") {
       return NextResponse.json(
         new ApiError(500, "Server error while generating tokens")
       );
     }
 
-    const response = NextResponse.json(
-      new ApiResponse(201, null, "User creation successful"),
-      { status: 201 }
+    const response = NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_URL}/v1/create-username`
     );
     response.cookies.set("accessToken", token.accessToken, {
       httpOnly: true,
