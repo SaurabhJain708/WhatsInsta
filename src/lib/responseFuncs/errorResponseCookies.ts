@@ -5,8 +5,19 @@ import { Ireturn } from "../checkAuth";
 export function cookieErrorResponse(
   statusCode: number,
   message: string,
-  AuthContents?: Ireturn | boolean
+  AuthContents?: Ireturn | boolean,
+  secured?: boolean
 ): NextResponse {
+  if (
+    AuthContents &&
+    typeof AuthContents !== "boolean" &&
+    secured &&
+    (!AuthContents.isVerified || !AuthContents.areDetailsComplete)
+  ) {
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_URL}/v1/sign-up`
+    );
+  }
   const response = NextResponse.json(new ApiError(statusCode, message), {
     status: statusCode,
   });
