@@ -38,6 +38,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           password: data.password,
           email: data.identifier,
+          username: data.identifier,
         }),
         credentials: "include",
       });
@@ -138,6 +139,12 @@ export default function LoginPage() {
                 }}
               >
                 {passwordVisible ? <BsEyeSlash /> : <BsEye color="black" />}
+              </div>
+              {/* Forgot Password link */}
+              <div className="text-right text-sm mt-1">
+                <Link href="/v1/otp" className="text-green-600 hover:underline">
+                  Forgot Password?
+                </Link>
               </div>
             </div>
             {errors.password && (
