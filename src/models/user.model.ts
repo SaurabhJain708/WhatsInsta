@@ -34,6 +34,8 @@ const userSchema: mongoose.Schema<Iuser> = new mongoose.Schema<Iuser>(
       type: String,
       unique: true,
       trim: true,
+      sparse: true,
+      lowercase: true,
     },
     password: {
       type: String,
@@ -62,6 +64,7 @@ const userSchema: mongoose.Schema<Iuser> = new mongoose.Schema<Iuser>(
       unique: true,
       trim: true,
       sparse: true,
+      lowercase: true,
     },
     refreshToken: {
       type: String,

@@ -2,6 +2,7 @@ import { CheckAuth } from "@/lib/checkAuth";
 import { mongoDb } from "@/lib/mongodb";
 import { errorResponse } from "@/lib/responseFuncs/errorResponse";
 import { cookieResultResponse } from "@/lib/responseFuncs/resultResponsecookies";
+import { User } from "@/models/user.model";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -19,9 +20,13 @@ export async function POST(req: NextRequest) {
       return errorResponse(411, "User is not verified");
     }
     const user = AuthContents.user;
-    user.areDetailsComplete = true;
-    user.password = password;
-    await user.save();
+    const newUser = await User.findById(user._id);
+    if (!newUser) {
+      return errorResponse(404, "User not found");
+    }
+    newUser.password = password;
+    newUser.areDetailsComplete = true;
+    await newUser!.save();
     return cookieResultResponse(
       200,
       null,

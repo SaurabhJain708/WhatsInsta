@@ -7,6 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FcGoogle } from "react-icons/fc";
 import { AiOutlineUser, AiOutlineLock } from "react-icons/ai";
 import Link from "next/link";
+import { BsEye, BsEyeSlash } from "react-icons/bs";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 // Validation schema
 const loginSchema = z.object({
@@ -15,20 +18,50 @@ const loginSchema = z.object({
 });
 
 export default function LoginPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: unknown) => {
-    setIsSubmitting(true);
-    console.log("Logging in with:", data);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
+  const onSubmit = async (data: z.infer<typeof loginSchema>) => {
+    try {
+      const response = await fetch("/api/auth/credentials-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: data.password,
+          email: data.identifier,
+        }),
+        credentials: "include",
+      });
+      const result = await response.json();
+      if (result.statusCode === 200) {
+        router.push("/v2/dashboard");
+      } else if (result.statusCode === 411 || result.statusCode === 404) {
+        router.push("/v1/sign-up");
+      }
+      toast(result.message, {
+        action: {
+          label: "x",
+          onClick: () => console.log("Closed toast"),
+        },
+      });
+    } catch (error) {
+      console.error("Error during login:", error);
+      toast("Failed to connect, Please try again", {
+        action: {
+          label: "x",
+          onClick: () => console.log("Closed toast"),
+        },
+      });
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -39,13 +72,20 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-green-50 px-4">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg space-y-6">
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-green-700 mb-2">KrishiSaarthi</h1>
-          <p className="text-sm text-gray-600">Empowering Farmers with Technology</p>
+          <h1 className="text-4xl font-extrabold text-green-700 mb-2">
+            KrishiSaarthi
+          </h1>
+          <p className="text-sm text-gray-600">
+            Empowering Farmers with Technology
+          </p>
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
           <div>
-            <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="identifier"
+              className="block text-sm font-medium text-gray-700"
+            >
               Username or Email
             </label>
             <div className="relative mt-1">
@@ -64,12 +104,17 @@ export default function LoginPage() {
               />
             </div>
             {errors.identifier && (
-              <p className="text-xs text-red-600 mt-1">{errors.identifier.message}</p>
+              <p className="text-xs text-red-600 mt-1">
+                {errors.identifier.message}
+              </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Password
             </label>
             <div className="relative mt-1">
@@ -78,7 +123,7 @@ export default function LoginPage() {
               </div>
               <input
                 id="password"
-                type="password"
+                type={passwordVisible ? "text" : "password"}
                 autoComplete="current-password"
                 className={`pl-10 w-full border ${
                   errors.password ? "border-red-300" : "border-gray-300"
@@ -86,9 +131,19 @@ export default function LoginPage() {
                 placeholder="Enter your password"
                 {...register("password")}
               />
+              <div
+                className="absolute top-3.5 right-4 cursor-pointer"
+                onClick={() => {
+                  setPasswordVisible((prev) => !prev);
+                }}
+              >
+                {passwordVisible ? <BsEyeSlash /> : <BsEye color="black" />}
+              </div>
             </div>
             {errors.password && (
-              <p className="text-xs text-red-600 mt-1">{errors.password.message}</p>
+              <p className="text-xs text-red-600 mt-1">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
@@ -120,7 +175,10 @@ export default function LoginPage() {
 
         <div className="text-center text-sm text-gray-600 mt-4">
           New to KrishiSaarthi?{" "}
-          <Link href="/v1/sign-up" className="text-green-600 font-medium hover:underline">
+          <Link
+            href="/v1/sign-up"
+            className="text-green-600 font-medium hover:underline"
+          >
             Sign up
           </Link>
         </div>
